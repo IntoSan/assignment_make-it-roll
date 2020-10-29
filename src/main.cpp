@@ -74,19 +74,45 @@ protected:
     Vector retrieveTarget3D(const Vector &cogL, const Vector &cogR)
     {
         // FILL IN THE CODE
-        return Vector(3);
+        Property optGaze;
+        optGaze.put("device","gazecontrollerclient");
+        optGaze.put("remote","/iKinGazeCtrl");
+        optGaze.put("local","/tracker/gaze");
+        drvGaze.view(igaze);
+        Vector a(3);
+        igaze->triangulate3DPoint(cogL,cogR,a);
+        return a;
     }
 
     /***************************************************/
     void fixate(const Vector &x)
     {
         // FILL IN THE CODE
+        Property optGaze;
+        optGaze.put("device","gazecontrollerclient");
+        optGaze.put("remote","/iKinGazeCtrl");
+        optGaze.put("local","/tracker/gaze");
+       
+        
+        if (!drvGaze.open(optGaze))
+        {
+            yError()<<"Unable to open the Gaze Controller";
+        }
+
+        drvGaze.view(igaze);
+        
+        igaze->lookAtFixationPointSync(x);             // request to gaze at the desired fixation point and wait for reply (sync method)
+        igaze->waitMotionDone();                        // wait until the operation is done
+        yInfo()<<"gazing at pixel: "<<x.toString(3,3);
+
     }
 
     /***************************************************/
     Vector computeHandOrientation()
     {
         // FILL IN THE CODE
+        Vector o(4);
+        o[0]=1.0; o[1]=0.0; o[2]=0.0; o[3]=M_PI;
         return Vector(4);
     }
 
@@ -94,17 +120,50 @@ protected:
     void approachTargetWithHand(const Vector &x, const Vector &o)
     {
         // FILL IN THE CODE
+        Property optArm;
+        optArm.put("device","cartesiancontrollerclient");
+        optArm.put("remote","/icubSim/cartesianController/right_arm");
+        optArm.put("local","/cartesian_client/right_arm"); 
+        drvArm.view(iarm);
+        Vector xd=x;
+        xd[0]+=0.0;
+        xd[1]+=0.2;
+        xd[2]+=0.0;
+        Vector od=o;
+        iarm->goToPoseSync(xd,od);  
+        iarm->waitMotionDone();
     }
 
     /***************************************************/
     void roll(const Vector &x, const Vector &o)
     {
         // FILL IN THE CODE
+        Property optArm;
+        optArm.put("device","cartesiancontrollerclient");
+        optArm.put("remote","/icubSim/cartesianController/right_arm");
+        optArm.put("local","/cartesian_client/right_arm"); 
+        drvArm.view(iarm);
+        Vector xd=x;
+        xd[0]+=0.0;
+        xd[1]+=-0.1;
+        xd[2]+=0.0;
+        Vector od=o;
+        iarm->goToPoseSync(xd,od); 
+        iarm->waitMotionDone();
     }
 
     /***************************************************/
     void look_down()
     {
+        Property optGaze;
+        optGaze.put("device","gazecontrollerclient");
+        optGaze.put("remote","/iKinGazeCtrl");
+        optGaze.put("local","/tracker/gaze");
+        if (!drvGaze.open(optGaze))
+        {
+            yError()<<"Unable to open the Gaze Controller";
+        }
+        drvGaze.view(igaze);
         // we ask the controller to keep the vergence
         // from now on fixed at 5.0 deg, which is the
         // configuration where we calibrated the stereo-vision;
@@ -113,8 +172,18 @@ protected:
         if (!simulation)
             igaze->blockEyes(5.0);
 
-        // FILL IN THE CODE
+        // FILL IN THE CODE 
+        
+        Vector fp(3);
+        fp[0]=-0.3;                                     // x-component [m]
+        fp[1]=0.0;                                      // y-component [m]
+        fp[2]=-0.0;                                     // z-component [m]
+        igaze->lookAtFixationPointSync(fp);             // request to gaze at the desired fixation point and wait for reply (sync method)
+        igaze->waitMotionDone();                        // wait until the operation is done
+
+        
     }
+    /***************************************************/
 
     /***************************************************/
     bool make_it_roll(const Vector &cogL, const Vector &cogR)
@@ -149,6 +218,29 @@ protected:
     void home()
     {
         // FILL IN THE CODE
+        Property optArm;
+        optArm.put("device","cartesiancontrollerclient");
+        optArm.put("remote","/icubSim/cartesianController/right_arm");
+        optArm.put("local","/cartesian_client/right_arm"); 
+        drvArm.view(iarm);
+        Vector x0(3),o0(4);
+        x0[0]=0; x0[1]=0; x0[2]=0;
+        o0[0]=0; o0[1]=0; o0[2]=0; o0[3]=0;
+        iarm->goToPose (x0,o0);
+        
+        Property optGaze;
+        optGaze.put("device","gazecontrollerclient");
+        optGaze.put("remote","/iKinGazeCtrl");
+        optGaze.put("local","/tracker/gaze");
+        drvGaze.view(igaze);
+
+        Vector fp(3);
+        fp[0]=-0.6;                                     // x-component [m]
+        fp[1]=0.0;                                      // y-component [m]
+        fp[2]=0.0;                                      // z-component [m]
+        igaze->lookAtFixationPointSync(fp);             // request to gaze at the desired fixation point and wait for reply (sync method)
+        igaze->waitMotionDone();                        // wait until the operation is done
+
     }
 
 public:
@@ -186,6 +278,20 @@ public:
         }
 
         // FILL IN THE CODE
+        PolyDriver drvArm(optArm);
+        drvArm.view(iarm);
+
+        Property optGaze;
+        optGaze.put("device","gazecontrollerclient");
+        optGaze.put("remote","/iKinGazeCtrl");
+        optGaze.put("local","/tracker/gaze");
+        
+        if (!drvGaze.open(optGaze))
+        {
+            yError()<<"Unable to open the Gaze Controller";
+        }
+
+        drvGaze.view(igaze);
 
         imgLPortIn.open("/imgL:i");
         imgRPortIn.open("/imgR:i");
@@ -244,7 +350,8 @@ public:
         {
             // FILL IN THE CODE
             bool go=false;   // you need to properly handle this flag
-
+            if (okL && okR)
+                go=true;
             bool rolled=false;
             if (go || !simulation)
                 rolled=make_it_roll(cogL,cogR);
@@ -299,7 +406,7 @@ public:
         mtx.unlock();
 
         PixelRgb color;
-        color.r=255; color.g=0; color.b=0;
+        color.r=0; color.g=0; color.b=255;
 
         if (okL)
             draw::addCircle(*imgL,color,(int)cogL[0],(int)cogL[1],5);
