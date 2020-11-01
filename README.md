@@ -3,7 +3,7 @@ Operational Control with iCub
 
 [![Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/vvv-school/assignment_make-it-roll)
 
-# Демонстрация решенной задачи в файле Шпак_Make-it-roll.mp4
+# Демонстрация решенной задачи в файле Шпак_Make-it-roll.mp4 (https://drive.google.com/file/d/1zZTflngfBhRJWbmrdens9t_4wTdB-IeZ/view?usp=sharing)
 
 # Prerequisites
 By now, you should be an expert of the following components :wink::
