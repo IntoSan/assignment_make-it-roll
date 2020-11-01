@@ -3,6 +3,8 @@ Operational Control with iCub
 
 [![Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/vvv-school/assignment_make-it-roll)
 
+# Демонстрация решенной задачи в файле Шпак_Make-it-roll.mp4
+
 # Prerequisites
 By now, you should be an expert of the following components :wink::
 - [Cartesian Control](http://www.icub.org/doc/icub-main/icub_cartesian_interface.html).
